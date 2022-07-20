@@ -24,6 +24,7 @@ function sum(data)
 function linearOperation(mA, mB, op = "*")
 {
     let newM = new Matrix(mA.nrow, mA.ncol);
+    let a, b;
 
     // valaidation
     if(mA.nrow != mB.nrow)
@@ -41,13 +42,20 @@ function linearOperation(mA, mB, op = "*")
     {
         for(let c = 0; c < mA.ncol; c++)
         {
-            if(op == "*")
+            a = mA.m[r][c];
+            b = mB.m[r][c];
+
+            if(a == 0 || b == 0)
             {
-                newM.m[r][c] = mA.m[r][c] * mB.m[r][c];
+                newM.m[r][c] = 0;
+            }
+            else if(op == "*")
+            {
+                newM.m[r][c] = a * b;
             }
             else
             {
-                newM.m[r][c] = mA.m[r][c] / mB.m[r][c];
+                newM.m[r][c] = a / b;
             }
         }
     }
@@ -195,7 +203,8 @@ function RREFConvert(m_, ma_)
     m = REFs[0];
     ma1 = REFs[1];
     [m, ma1] = leadingEntryScale(m, ma1);
-
+    m.show();
+    ma1.show();
     console.log("+++++++++++Transposing++++++++++");
     m = m.transpose();
 
@@ -203,6 +212,9 @@ function RREFConvert(m_, ma_)
     [m, ma2] = REFConvert(m, ma2);
 
     console.log("++++++++++Calculating results+++++++++++");
+
+    m.show();
+    ma2.show();
 
     ma1 = linearOperation(ma1, ma2, "/")
 
@@ -459,6 +471,8 @@ let m4 = new Matrix(3, 1, [14, 32, 51]);
 let unitM = new Matrix(3, 3, [1, 1, 1, 1, 1, 1, 1, 1, 1]);
 let unitMa = new Matrix(3, 1, [1, 1, 1]);
 let idm = new Matrix(3, 3, [1, 0, 0, 0, 1, 0, 0, 0, 1])
+let m8 = new Matrix(3, 3, [0,-3, 9, 2, 0, 17, -1, -1, 34])
+let m9 = new Matrix(3, 1, [36, 35, 34])
 
 // m3.show();
 // m4.show();
@@ -493,7 +507,7 @@ let idm = new Matrix(3, 3, [1, 0, 0, 0, 1, 0, 0, 0, 1])
 
 
 // m4.transpose().show()
-let [m5, m6] = RREFConvert(m3, idm);
+let [m5, m6] = REFConvert(m8, m9);
 
 m5.show();
 m6.show();
