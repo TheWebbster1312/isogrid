@@ -21,42 +21,140 @@ function sum(data)
     return sumation;
 }
 
+function linearOperation(mA, mB, op = "*")
+{
+    let newM = new Matrix(mA.nrow, mA.ncol);
+
+    // valaidation
+    if(mA.nrow != mB.nrow)
+    {
+        console.log("matracies are not the same dimension");
+        return null;
+    }
+    if(mA.ncol != mB.ncol)
+    {
+        console.log("matracies are not the same dimension");
+        return null;
+    }
+
+    for(let r = 0; r < mA.nrow; r++)
+    {
+        for(let c = 0; c < mA.ncol; c++)
+        {
+            if(op == "*")
+            {
+                newM.m[r][c] = mA.m[r][c] * mB.m[r][c];
+            }
+            else
+            {
+                newM.m[r][c] = mA.m[r][c] / mB.m[r][c];
+            }
+        }
+    }
+
+    return newM;
+}
+
 function guasianElimination(m1, m2)
 {
     
 }
 
-function REFConvert(m, ma)
+function leadingEntryScale(m_, ma_)
 {
-    // <add me>
+    // the reason for these copyMatrix statements is so that we dont change the original matrix, we return a copy thats been changed
+    let m = copyMatrix(m_);
+    let ma = copyMatrix(ma_);
+    // this function can only scale a matrix that is already in REF
 
-    var keepGoing = true;
-    var col = 0 // start at col 1
-    var row = 1 // starts at second row
-    var target, diagRef, rowMultiplier;
-    var originalRank = m.getRank();
-    console.log(originalRank)
+    // leading entries to 1
+
+    for(let i = 0; i < m.nrow; i++)
+    {
+        // goes through each row
+
+        // grabs the diagonal (should be first entry)
+        let scaler = m.get(i, i);
+
+        if(scaler == 0)
+        {
+            continue;
+        }
+
+        // divides all numbers in row by the leading entry
+        for(let j = 0; j < (m.nrow - i); j++)
+        {
+            target = m.get(i, i + j);
+            target = target / scaler;
+            m.set(i, i + j, target);
+        }
+        // augmented matrix
+        for(let j = 0; j < ma.ncol; j++)
+        {
+            target = ma.get(i, j);
+            target = target / scaler;
+            ma.set(i, j, target)
+        }
+    }
+    return [m, ma];
+}
+
+function flip_vert(m)
+{
+    let mNew = new Matrix(m.nrow, m.ncol);
+
+    for(let i = 0; i < m.nrow; i++)
+    {
+        let j = m.nrow- 1 - i;
+        mNew.setRow(j, m.getRow(i));
+    }
+
+    return mNew;
+}
+
+function REFConvert(m_, ma_)
+{
+    let m = copyMatrix(m_);
+    let ma = copyMatrix(ma_);
+    let keepGoing = true;
+    let col = 0 // start at col 1
+    let row = 1 // starts at second row
+    let target, diagRef, rowMultiplier;
+    let originalRank = m.getRank();
+    // console.log(originalRank)
 
     while(keepGoing)
     {
-        console.log(row, col)
+        // goes row by row
+        // console.log(row, col)
         target = m.get(row, col); // the number to be zeroed
         diagRef = m.get(col, col); // the operation number on the diag
 
         rowMultiplier = (target / diagRef);
 
-        var targetRow = m.getRow(row);
-        var refRow = m.getRow(col);
+        let targetRow = m.getRow(row);
+        let aTargetRow = ma.getRow(row);
+        let refRow = m.getRow(col);
+        let aRefRow = ma.getRow(col);
+        // console.log(aRefRow)
+        // console.log(aTargetRow)
 
-        // operate on target row
-        for(var i = 0; i < m.ncol; i++)
+        // column by column within row
+        for(let i = 0; i < m.ncol; i++)
         {
+            // The main matrix
             m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
+        }
+        for(let i = 0; i < ma.ncol; i++)
+        {           
+            // The augmented part of the matrix
+            ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
         }
 
         // debugging
-        console.log(target, diagRef, rowMultiplier)
-        console.log(m.show())
+        //console.log(target, diagRef, rowMultiplier)
+        // m.show()
+        // ma.show()
     
         // progression and stopping 
         if((row + 1)  < m.nrow)
@@ -76,53 +174,43 @@ function REFConvert(m, ma)
         }
     }
 
-    var newRank = m.getRank();
+    let newRank = m.getRank();
 
     if(newRank != originalRank)
     {
         console.log("Matrix Not invertable!")
         return null;
     }
+    return [m, ma];
+}
 
-    // leading entries to 1
+function RREFConvert(m_, ma_)
+{
+    let m = copyMatrix(m_);
+    let ma1 = copyMatrix(ma_);
+    let ma2 = copyMatrix(ma_);
 
-    for(i = 0; i < m.nrow; i++)
-    {
-        var scaler = m.get(i, i);
+    console.log("+++++++++++Getting into leading entry REF++++++++++");
+    let REFs = REFConvert(m, ma1);
+    m = REFs[0];
+    ma1 = REFs[1];
+    [m, ma1] = leadingEntryScale(m, ma1);
 
-        if(scaler == 0)
-        {
-            continue;
-        }
+    console.log("+++++++++++Transposing++++++++++");
+    m = m.transpose();
 
-        for(var j = 0; j < (m.nrow - i); j++)
-        {
-            target = m.get(i, i + j);
-            target = target / scaler;
-            m.set(i, i + j, target);
-        }
-    }
+    console.log("+++++++++++upper triangle++++++++++");
+    [m, ma2] = REFConvert(m, ma2);
 
-    // debugging
-    m.show()
-    m.transpose().show()
+    console.log("++++++++++Calculating results+++++++++++");
 
-    // upper triangle
-    row = m.nrow - 2
-    keepGoing = true;
+    ma1 = linearOperation(ma1, ma2, "/")
 
-    while(keepGoing)
-    {
-        col = m.ncol -1;
-        
-        for(var i = 0; i < (m.nrow - row); i++)
-        {
-            scaler = m.get(row, col);
+    m.show();
+    ma1.show();
 
-            
-        }
-    }
-    
+    return [m, ma1]
+
 }
 
 class Matrix
@@ -137,10 +225,10 @@ class Matrix
         // making null matrix
         if(data == null)
         {
-            for(var i = 0; i < nrow; i++)
+            for(let i = 0; i < nrow; i++)
             {
                 this.m[i] = [];
-                for(var j = 0; j < ncol; j++)
+                for(let j = 0; j < ncol; j++)
                 {
                     this.m[i][j] = null;
                 }
@@ -149,10 +237,10 @@ class Matrix
         //making non null matrix
         else
         {
-            for(var i = 0; i < nrow; i++)
+            for(let i = 0; i < nrow; i++)
             {
                 this.m[i] = [];
-                for(var j = 0; j < ncol; j++)
+                for(let j = 0; j < ncol; j++)
                 {
                     this.m[i][j] = data[(i * ncol) + j];
                 }
@@ -160,7 +248,6 @@ class Matrix
         }
     }
     // object functions
-
     show()
     {
         let content = "";
@@ -186,10 +273,22 @@ class Matrix
     {
         return this.m.map(function(value, index){return value[col]});
     }
+
+    getData()
+    {
+        let data = [];
+        for(let i = 0; i < this.nrow; i++)
+        {
+            data = data.concat(this.getRow(i));
+        }
+        return data;
+    }
+
     set(row, col, data)
     {
-        this.m[row][col] = data
+        this.m[row][col] = data;
     }
+
     setRow(row, data)
     {
         // validation
@@ -198,17 +297,18 @@ class Matrix
             return null;
         }
         
-        if(row > this.nrow)
+        if(row - 1 > this.nrow)
         {
             return null;
         }
 
         // setting row
-        for(var i = 0; i < this.ncol; i++)
+        for(let i = 0; i < this.ncol; i++)
         {
             this.m[row][i] = data[i];
         }
     }
+
     setCol(col, data)
     {
         // validation
@@ -217,22 +317,22 @@ class Matrix
             return null;
         }
         
-        if(col > this.nrow)
+        if(col - 1 > this.nrow)
         {
             return null;
         }
 
         // setting col
-        for(var i = 0; i < this.nrow; i++)
+        for(let i = 0; i < this.nrow; i++)
         {
-            this.m[col][i] = data[i];
+            this.m[i][col] = data[i];
         }
     }
 
     sumRow(row)
     {
         // validatiom
-        if(row > this.nrow)
+        if(row - 1 > this.nrow)
         {
             return null;
         }
@@ -243,7 +343,7 @@ class Matrix
     sumCol(col)
     {
         // validatiom
-        if(col > this.ncol)
+        if(col - 1 > this.ncol)
         {
             return null;
         }
@@ -253,11 +353,11 @@ class Matrix
 
     sum()
     {
-        var sum = 0;
+        let theSum= 0;
 
-        for(var i = 0; i< this.nrow; i++)
+        for(let i = 0; i< this.nrow; i++)
         {
-            sum += this.sumRow(i);
+            theSum+= this.sumRow(i);
         }
 
         return sum
@@ -265,23 +365,22 @@ class Matrix
     
     transpose()
     {
-        var newM = new Matrix(this.ncol, this.nrow);
-        
-        for(var i = 0; i < this.nrow; i++)
+        let newM = new Matrix(this.ncol, this.nrow);
+
+        for(let i = 0; i < this.nrow; i++)
         {
             newM.setCol(i, this.getRow(i));
         }
-
         return newM;
     }
 
     multiply(m2)
     {
         if (typeof(m2) == "number" ){
-            // for intager multiplication
-            var newData = [];
-            var r, c;
-            for(var i = 0; i < this.capacity; i++)
+            // scaling a amtrix by an intager
+            let newData = [];
+            let r, c;
+            for(let i = 0; i < this.capacity; i++)
             {
                 r = Math.floor(i%this.nrow);
                 c = Math.floor(i/this.ncol);
@@ -291,15 +390,16 @@ class Matrix
         }
         else if(this.ncol == m2.nrow)
         {
-            var newSize = this.nrow * m2.ncol;
-            var newData = [];
-            var r, c;
-            for(var i = 0; i < newSize; i++)
+            //multipkying a matrix by another matrix
+            let newSize = this.nrow * m2.ncol;
+            let newData = [];
+            let r, c;
+            for(let i = 0; i < newSize; i++)
             {
                 r = Math.floor(i%this.nrow)
                 c = Math.floor(i/m2.nrow)
-                var row1 = this.getRow(r);
-                var col2 = m2.getCol(c);
+                let row1 = this.getRow(r);
+                let col2 = m2.getCol(c);
                 newData[i] = arMultiply(row1, col2);
             }
             return new Matrix(this.nrow, m2.ncol, newData);
@@ -315,43 +415,99 @@ class Matrix
         if(m2.ncol == this.ncol && m2.nrow == this.nrow)
         {
             // for intager multiplication
-            var newData = [];
-            var i = 0;
-            for(var c = 0; c < this.ncol; c++)
+            let newData = [];
+            let i = 0;
+            for(let c = 0; c < this.ncol; c++)
             {
-                for(var r = 0; r < this.ncol; r++)
+                for(let r = 0; r < this.nrow; r++)
                 {
+                    //console.log("wow", r, c)
                     newData[i] = this.m[r][c] + m2.m[r][c];
                     i++;
                 }
             }
             return new Matrix(this.nrow, this.ncol, newData);
         }
-        else{
+        else
+        {
+            console.log("Matricies need to be of same dimension")
             return null;
         }
     }
 
     getRank()
     {
-        var rank = 0;
-        for(var i = 0; i < this.nrow; i++)
+        let rank = 0;
+        for(let i = 0; i < this.nrow; i++)
         {
             if(sum(this.getRow(i)) != 0) rank += 1;
         }
 
         return rank;
     }
-
 }
 
-m1 = new Matrix(2, 2, [0, -1, 1, 0]);
-m2 = new Matrix(2, 2, [4, 6, 1, 1]);
-m3 = new Matrix(3, 3, [1, 2, 3, 4, 5, 6, 8, 8, 9]);
+function copyMatrix(m)
+{
+    return new Matrix(m.nrow, m.ncol, m.getData());
+}
+
+let m1 = new Matrix(2, 2, [0, -1, 1, 0]);
+let m2 = new Matrix(2, 2, [4, 6, 1, 1]);
+let m3 = new Matrix(3, 3, [1, 2, 3, 4, 5, 6, 8, 8, 9]);
+let m4 = new Matrix(3, 1, [14, 32, 51]);
+let unitM = new Matrix(3, 3, [1, 1, 1, 1, 1, 1, 1, 1, 1]);
+let unitMa = new Matrix(3, 1, [1, 1, 1]);
+let idm = new Matrix(3, 3, [1, 0, 0, 0, 1, 0, 0, 0, 1])
+
+// m3.show();
+// m4.show();
+
+// flip_vert(m3).show()
+// flip_vert(m4).show()
+
+// let refM3, refM4;
+
+// let tmp = REFConvert(m3, m4)
+// refM3 = tmp[0];
+// refM4 = tmp[1];
+
+
+// tmp = leadingEntryScale(refM3, refM4)
+// refM3 = tmp[0];
+// refM4 = tmp[1];
+
+// refM3.show()
+// refM4.show()
+
+// tmp = REFConvert(refM3.transpose(), m4)
+// refM3 = tmp[0];
+// let refM42 = tmp[1];
+
+// refM3.show()
+// refM42.show()
+
+// linearOperation(refM4, refM42, "/").show()
+
+
+
+
+// m4.transpose().show()
+let [m5, m6] = RREFConvert(m3, idm);
+
+m5.show();
+m6.show();
+
+
 
 //m3.transpose().show()
 
-REFConvert(m3);
+// let augmentedMatrix = REFConvert(m3, m4)
+// leadingEntryScale(augmentedMatrix[0], augmentedMatrix[1])
+
+
+// m3.show();
+// m4.show();
 
 // console.log(m1)
 // console.log(m2)
