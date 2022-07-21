@@ -10,17 +10,6 @@ function arMultiply(ar1, ar2)
     return sumation
 }
 
-function copyList(data)
-{
-    let newData = [];
-    for(let i = 0; i < data.length; i++)
-    {
-        newData[i] = data[i];
-    }
-    return newData;
-
-}
-
 function sum(data)
 {
     var sumation = 0;
@@ -689,6 +678,16 @@ function copy(data)
 function copyMatrix(m)
 {
     return new Matrix(m.nrow, m.ncol, m.getData());
+}
+
+function copyList(data)
+{
+    let newData = [];
+    for(let i = 0; i < data.length; i++)
+    {
+        newData[i] = data[i];
+    }
+    return newData;
 }
 
 let m1 = new Matrix(2, 2, [0, -1, 1, 0]);

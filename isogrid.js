@@ -4,6 +4,9 @@ canvas.height = window.innerHeight;
 
 document.addEventListener("keypress", keypressHandler);
 
+const IJScalerMatrix = new Matrix(2, 2, [-0.5, 0.5, 0.25, 0.25]);
+const XYScalerMatrix = IJScalerMatrix.invert();
+
 function keypressHandler(e){
     switch(e.which)
     {
@@ -27,8 +30,7 @@ offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2])
 
 function toXY(i, j, size, offset = 0)
 {
-    var convertionMat = new Matrix(2, 2, [-0.5, 0.5, 0.25, 0.25]);
-    convertionMat = convertionMat.multiply(size);
+    convertionMat = IJScalerMatrix.multiply(size);
     
     var ijMat = new Matrix(2, 1, [i, j]);
     
@@ -40,8 +42,9 @@ function toXY(i, j, size, offset = 0)
     {
         return convertionMat.multiply(ijMat).getCol(0)
     }
-
-    
+}
+function toIJ()
+{
 
 }
 
