@@ -1,5 +1,13 @@
 //Matracies
 
+/* 
+===============================================================================
+Useful functions used. these generally dont modify the matrix and return a new 
+one
+===============================================================================
+*/
+
+// will multipy each element in an array with its respective partner, and return the sum
 function arMultiply(ar1, ar2)
 {   
     var sumation = 0
@@ -10,6 +18,11 @@ function arMultiply(ar1, ar2)
     return sumation
 }
 
+/**
+ * 
+ * @param {Array} data an array of numbers
+ * @returns The summation of tjay 
+ */
 function sum(data)
 {
     var sumation = 0;
@@ -21,6 +34,14 @@ function sum(data)
     return sumation;
 }
 
+/**
+ * 
+ * @param {Matrix} mA a numeric matrix that will have operations preformed to it
+ * @param {Matrix} mB a numeric matrix that will preform the operations
+ * @param {String} op the operator, either * or / to multiply or devide
+ * @returns a new matrix with the results of each respective element of the 
+ *          two input matracies after the operation is preformed:mNew[1][1] mA[1][1] / mB[1][1]
+ */
 function linearOperation(mA, mB, op = "*")
 {
     let newM = new Matrix(mA.nrow, mA.ncol);
@@ -63,6 +84,14 @@ function linearOperation(mA, mB, op = "*")
     return newM;
 }
 
+
+/**
+ * 
+ * @param {Matrix} m_ the matrix you want to swap rows in
+ * @param {Array} row1 
+ * @param {*} row2 
+ * @returns A new matrix with rows 1 and 2 swapped
+ */
 function swapRows(m_, row1, row2)
 {
     let m = copyMatrix(m_);
@@ -74,6 +103,12 @@ function swapRows(m_, row1, row2)
     return m;
 }
 
+
+/**
+ * 
+ * @param {number} size 
+ * @returns an identity matrix of n = m = size
+ */
 function identityMatrix(size)
 {
     let idm = new Matrix(size, size);
@@ -86,11 +121,13 @@ function identityMatrix(size)
     return idm;
 }
 
-function guasianElimination(m1, m2)
-{
-    
-}
-
+/**
+ * 
+ * @param {Matrix} m_ Main matrix
+ * @param {Matrix} ma_ augmented part of the matrix
+ * @param {boolean} t transpose, then scale, then transpose again (optional)
+ * @returns a matrix where all leading entries are scaled to 1
+ */
 function leadingEntryScale(m_, ma_ = null, t = false)
 {
     let m;
@@ -174,6 +211,11 @@ function leadingEntryScale(m_, ma_ = null, t = false)
     }
 }
 
+/**
+ * 
+ * @param {Matrix} m 
+ * @returns a new matrix which is vertically flipped
+ */
 function flip_vert(m)
 {
     let mNew = new Matrix(m.nrow, m.ncol);
@@ -187,6 +229,12 @@ function flip_vert(m)
     return mNew;
 }
 
+/**
+ * 
+ * @param {Matrix} m_ Main matrix
+ * @param {Matrix} ma_ 
+ * @returns 
+ */
 function REFConvert(m_, ma_)
 {
     let m = copyMatrix(m_);
