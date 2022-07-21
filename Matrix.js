@@ -10,6 +10,17 @@ function arMultiply(ar1, ar2)
     return sumation
 }
 
+function copyList(data)
+{
+    let newData = [];
+    for(let i = 0; i < data.length; i++)
+    {
+        newData[i] = data[i];
+    }
+    return newData;
+
+}
+
 function sum(data)
 {
     var sumation = 0;
@@ -202,23 +213,18 @@ function REFConvert(m_, ma_)
     {
         // goes row by row
         // console.log(row, col)
-        target = m.get(row, col); // the number to be zeroed
         ref = m.get(col, col); // the operation number on the diag
-        let swapManifest = false;
+        let swapped = false;
         // checking if needs to swap rows
         if(ref == 0)
         {
             impossible = true;
             let newRow;
-            for(let i = 0; i < m.nrow; i++)
+            for(let i = col; i < m.nrow; i++)
             {
                 let candidate = m.get(i, col);
                 console.log(candidate)
-                if(candidate == target) // checks from the top row of the column
-                {
-                    continue;
-                }
-                else if(candidate != 0)
+                if(candidate != 0)
                 {
                     impossible = false;
                     ref = candidate;
@@ -235,10 +241,21 @@ function REFConvert(m_, ma_)
             }
             else
             {
-                m = swapRows(m, 0, newRow);
-                ma = swapRows(ma, 0, newRow);
-                swapManifest = [0, 1];
+                m.show()
+                console.log(col, newRow)
+                console.log("swapping")
+                m = swapRows(m, col, newRow);
+                ma = swapRows(ma, col, newRow);
+                swapped = true;
+                m.show();
+                ma.show()
+                console.log("onetime")
             }
+        }
+        target = m.get(row, col); // the number to be zeroed
+        if(target == 0)
+        {
+            continue;
         }
 
         rowMultiplier = (target / ref);
@@ -258,15 +275,6 @@ function REFConvert(m_, ma_)
             // The augmented part of the matrix
             ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
         }
-
-        // // swapping row back if swapped
-
-        // if(swapManifest != false)
-        // {
-        //     m = swapRows(m, swapManifest[0], swapManifest[1]);
-        //     ma = swapRows(ma, swapManifest[0], swapManifest[1]);
-        // }
-    
         // progression and stopping 
         if((row + 1)  < m.nrow)
         {
@@ -308,23 +316,18 @@ function UREFConvert(m_, ma_)
     {
         // goes row by row
         // console.log(row, col)
-        target = m.get(row, col); // the number to be zeroed
         ref = m.get(col, col); // the operation number on the diag
-        let swapManifest = false;
+        let swapped = false;
         // checking if needs to swap rows
         if(ref == 0)
         {
             impossible = true;
             let newRow;
-            for(let i = 0; i < m.nrow; i++)
+            for(let i = col; i < m.ncol; i++)
             {
                 let candidate = m.get(i, col);
                 console.log(candidate)
-                if(candidate == target) // checks from the top row of the column
-                {
-                    continue;
-                }
-                else if(candidate != 0)
+                if(candidate != 0)
                 {
                     impossible = false;
                     ref = candidate;
@@ -341,12 +344,22 @@ function UREFConvert(m_, ma_)
             }
             else
             {
-                m = swapRows(m, 0, newRow);
-                ma = swapRows(ma, 0, newRow);
-                swapManifest = [0, 1];
+                m.show()
+                console.log(col, newRow)
+                console.log("swapping")
+                m = swapRows(m, col, newRow);
+                ma = swapRows(ma, col, newRow);
+                swapped = true;
+                m.show();
+                ma.show()
+                console.log("onetime")
             }
         }
-
+        target = m.get(row, col); // the number to be zeroed
+        if(target == 0)
+        {
+            continue;
+        }
 
         rowMultiplier = (target / ref);
 
@@ -368,10 +381,10 @@ function UREFConvert(m_, ma_)
 
         // // swapping row back if swapped
 
-        // if(swapManifest != false)
+        // if(swapped != false)
         // {
-        //     m = swapRows(m, swapManifest[0], swapManifest[1]);
-        //     ma = swapRows(ma, swapManifest[0], swapManifest[1]);
+        //     m = swapRows(m, swapped[0], swapped[1]);
+        //     ma = swapRows(ma, swapped[0], swapped[1]);
         // }
     
         // progression and stopping 
@@ -479,7 +492,7 @@ class Matrix
 
     getRow(row)
     {
-        return this.m[row]
+        return copyList(this.m[row])
     }
 
     getCol(col)
@@ -494,7 +507,7 @@ class Matrix
         {
             data = data.concat(this.getRow(i));
         }
-        return data;
+        return copyList(data);
     }
 
     set(row, col, data)
@@ -693,7 +706,10 @@ let idm = identityMatrix(3)
 let m8 = new Matrix(3, 3, [1, 2, -1, 2, 1, 2, -1, 2, 1])
 let m9 = new Matrix(3, 1, [36, 35, 34])
 
+console.log("hello")
+
 m1.invert().show()
+
 
 // m3.show();
 // m4.show();
