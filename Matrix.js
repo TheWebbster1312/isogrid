@@ -223,7 +223,6 @@ function REFConvert(m_, ma_)
             for(let i = col; i < m.nrow; i++)
             {
                 let candidate = m.get(i, col);
-                console.log(candidate)
                 if(candidate != 0)
                 {
                     impossible = false;
@@ -241,15 +240,9 @@ function REFConvert(m_, ma_)
             }
             else
             {
-                m.show()
-                console.log(col, newRow)
-                console.log("swapping")
                 m = swapRows(m, col, newRow);
                 ma = swapRows(ma, col, newRow);
                 swapped = true;
-                m.show();
-                ma.show()
-                console.log("onetime")
             }
         }
         target = m.get(row, col); // the number to be zeroed
@@ -326,7 +319,6 @@ function UREFConvert(m_, ma_)
             for(let i = col; i < m.ncol; i++)
             {
                 let candidate = m.get(i, col);
-                console.log(candidate)
                 if(candidate != 0)
                 {
                     impossible = false;
@@ -344,15 +336,9 @@ function UREFConvert(m_, ma_)
             }
             else
             {
-                m.show()
-                console.log(col, newRow)
-                console.log("swapping")
                 m = swapRows(m, col, newRow);
                 ma = swapRows(ma, col, newRow);
                 swapped = true;
-                m.show();
-                ma.show()
-                console.log("onetime")
             }
         }
         target = m.get(row, col); // the number to be zeroed
@@ -414,8 +400,6 @@ function RREFConvert(m_, ma_)
     let REFs = REFConvert(m, ma1);
     m = REFs[0];
     ma1 = REFs[1];
-    m.show();
-    ma1.show();
 
     // scaling by first entry
     [m, ma1] = leadingEntryScale(m, ma1);
@@ -431,12 +415,13 @@ function RREFConvert(m_, ma_)
 
 class Matrix
 {
-    constructor (nrow, ncol, data = null)
+    constructor (nrow, ncol, data = null, xint = true)
     {   
         this.nrow = nrow;
         this.ncol = ncol;
         this.capacity = (ncol * nrow);
         this.m = [];
+        this.xint = xint;
         
         // making null matrix
         if(data == null)
@@ -477,7 +462,7 @@ class Matrix
 
     get(row, col)
     {
-        return  this.m[row][col]
+        return  copy(this.m[row][col])
     }
 
     getRow(row)
@@ -618,7 +603,9 @@ class Matrix
                 let col2 = m2.getCol(c);
                 newData[i] = arMultiply(row1, col2);
             }
-            return new Matrix(this.nrow, m2.ncol, newData);
+            let newM = new Matrix(this.nrow, m2.ncol, newData)
+            if(this.xint){newM.toInt()}
+            return newM;
 
         }
         else
@@ -664,12 +651,25 @@ class Matrix
 
     FPFix()
     {
+        if (this.xint)
+        {
+            for(let r = 0; r < this.nrow; r++)
+            {
+                for(let c = 0; c < this.ncol; c++)
+                {
+                    let dp = Math.pow(10, 5);
+                    this.m[r][c] = Math.round(this.m[r][c]*dp)/dp;
+                }
+            }
+        }
+    }
+    toInt()
+    {
         for(let r = 0; r < this.nrow; r++)
         {
             for(let c = 0; c < this.ncol; c++)
             {
-                let dp = Math.pow(10, 6);
-                this.m[r][c] = Math.round(this.m[r][c] * dp) / dp;
+                this.m[r][c] = Math.round(this.m[r][c]);
             }
         }
     }
@@ -679,6 +679,11 @@ class Matrix
         idm = identityMatrix(this.nrow);
         return RREFConvert(this, idm)[1];
     }
+}
+function copy(data)
+{
+    let x = data
+    return x;
 }
 
 function copyMatrix(m)
@@ -696,9 +701,9 @@ let idm = identityMatrix(3)
 let m8 = new Matrix(3, 3, [1, 2, -1, 2, 1, 2, -1, 2, 1])
 let m9 = new Matrix(3, 1, [36, 35, 34])
 
-console.log("hello")
-
-m1.invert().show()
+m1.show();
+m1.invert().show();
+m1.invert().multiply(m1).show();
 
 
 // m3.show();
