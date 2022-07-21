@@ -572,8 +572,8 @@ class Matrix
             let r, c;
             for(let i = 0; i < this.capacity; i++)
             {
-                r = Math.floor(i%this.nrow);
-                c = Math.floor(i/this.ncol);
+                c = Math.floor(i%this.nrow);
+                r = Math.floor(i/this.ncol);
                 newData[i] = this.m[r][c]*m2;
             }
             return new Matrix(this.nrow, this.ncol, newData);
@@ -615,6 +615,30 @@ class Matrix
                 {
                     //console.log("wow", r, c)
                     newData[i] = this.m[r][c] + m2.m[r][c];
+                    i++;
+                }
+            }
+            return new Matrix(this.nrow, this.ncol, newData);
+        }
+        else
+        {
+            console.log("Matricies need to be of same dimension")
+            return null;
+        }
+    }
+    sub(m2)
+    {
+        if(m2.ncol == this.ncol && m2.nrow == this.nrow)
+        {
+            // for intager multiplication
+            let newData = [];
+            let i = 0;
+            for(let c = 0; c < this.ncol; c++)
+            {
+                for(let r = 0; r < this.nrow; r++)
+                {
+                    //console.log("wow", r, c)
+                    newData[i] = this.m[r][c] - m2.m[r][c];
                     i++;
                 }
             }
