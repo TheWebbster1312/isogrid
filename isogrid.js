@@ -180,7 +180,6 @@ function animateFrame()
 {
     c.clearRect(0,0,canvas.width, canvas.height);
     drawArray = sortOrderPriority(tiles)
-    console.log(drawArray)
     for(const element of drawArray)
     {
         element.draw();
