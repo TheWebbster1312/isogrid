@@ -63,16 +63,58 @@ function linearOperation(mA, mB, op = "*")
     return newM;
 }
 
+function swapRows(m_, row1, row2)
+{
+    let m = copyMatrix(m_);
+
+    let tmp = m.getRow(row1);
+    m.setRow(row1, m.getRow(row2));
+    m.setRow(row2, tmp);
+    
+    return m;
+}
+
+function identityMatrix(size)
+{
+    let idm = new Matrix(size, size);
+
+    for(let i = 0; i < size; i++)
+    {
+        idm.set(i, i, 1)
+    }
+
+    return idm;
+}
+
 function guasianElimination(m1, m2)
 {
     
 }
 
-function leadingEntryScale(m_, ma_)
+function leadingEntryScale(m_, ma_ = null, t = false)
 {
+    let m;
+    let ma = null;
     // the reason for these copyMatrix statements is so that we dont change the original matrix, we return a copy thats been changed
-    let m = copyMatrix(m_);
-    let ma = copyMatrix(ma_);
+    if(t)
+    {
+        m = copyMatrix(m_).transpose();
+    }
+    else
+    {
+        m = copyMatrix(m_);
+    }
+    if(ma_ != null)
+    {
+        if(t)
+        {
+            ma = copyMatrix(ma_).transpose();
+        }
+        else
+        {
+            ma = copyMatrix(ma_);
+        }
+    }
     // this function can only scale a matrix that is already in REF
 
     // leading entries to 1
@@ -81,30 +123,55 @@ function leadingEntryScale(m_, ma_)
     {
         // goes through each row
 
-        // grabs the diagonal (should be first entry)
-        let scaler = m.get(i, i);
-
-        if(scaler == 0)
+        // grabs the first entry
+        let scaler, entry;
+        for(let scanLeadingEntry = 0; scanLeadingEntry < m.ncol; scanLeadingEntry++)
         {
-            continue;
+            entry = m.get(i, scanLeadingEntry);
+            if(entry != 0)
+            {
+                scaler = entry;
+                break;
+            }
         }
-
         // divides all numbers in row by the leading entry
-        for(let j = 0; j < (m.nrow - i); j++)
+        for(let j = 0; j < (m.ncol); j++)
         {
-            target = m.get(i, i + j);
+            target = m.get(i, j);
+            if(target == 0)
+            {
+                continue;
+            }
             target = target / scaler;
-            m.set(i, i + j, target);
+            m.set(i, j, target);
+        }
+        if(t)
+        {
+            m = m.transpose();
         }
         // augmented matrix
-        for(let j = 0; j < ma.ncol; j++)
+        if(ma_ != null)
         {
-            target = ma.get(i, j);
-            target = target / scaler;
-            ma.set(i, j, target)
+            for(let j = 0; j < ma.ncol; j++)
+            {
+                target = ma.get(i, j);
+                target = target / scaler;
+                ma.set(i, j, target)
+            }
+            if(t)
+            {
+                ma = ma.transpose();
+            }
         }
     }
-    return [m, ma];
+    if(ma != null)
+    {
+        return [m, ma];
+    }
+    else
+    {
+        return m;
+    }
 }
 
 function flip_vert(m)
@@ -127,8 +194,8 @@ function REFConvert(m_, ma_)
     let keepGoing = true;
     let col = 0 // start at col 1
     let row = 1 // starts at second row
-    let target, diagRef, rowMultiplier;
-    let originalRank = m.getRank();
+    let target, ref, rowMultiplier;
+    let impossible = false;
     // console.log(originalRank)
 
     while(keepGoing)
@@ -136,17 +203,50 @@ function REFConvert(m_, ma_)
         // goes row by row
         // console.log(row, col)
         target = m.get(row, col); // the number to be zeroed
-        diagRef = m.get(col, col); // the operation number on the diag
+        ref = m.get(col, col); // the operation number on the diag
+        let swapManifest = false;
+        // checking if needs to swap rows
+        if(ref == 0)
+        {
+            impossible = true;
+            let newRow;
+            for(let i = 0; i < m.nrow; i++)
+            {
+                let candidate = m.get(i, col);
+                console.log(candidate)
+                if(candidate == target) // checks from the top row of the column
+                {
+                    continue;
+                }
+                else if(candidate != 0)
+                {
+                    impossible = false;
+                    ref = candidate;
+                    newRow = i
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            if(impossible)
+            {
+                keepGoing = false;
+            }
+            else
+            {
+                m = swapRows(m, 0, newRow);
+                ma = swapRows(ma, 0, newRow);
+                swapManifest = [0, 1];
+            }
+        }
 
-        rowMultiplier = (target / diagRef);
+        rowMultiplier = (target / ref);
 
         let targetRow = m.getRow(row);
         let aTargetRow = ma.getRow(row);
         let refRow = m.getRow(col);
         let aRefRow = ma.getRow(col);
-        // console.log(aRefRow)
-        // console.log(aTargetRow)
-
         // column by column within row
         for(let i = 0; i < m.ncol; i++)
         {
@@ -159,10 +259,13 @@ function REFConvert(m_, ma_)
             ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
         }
 
-        // debugging
-        //console.log(target, diagRef, rowMultiplier)
-        // m.show()
-        // ma.show()
+        // // swapping row back if swapped
+
+        // if(swapManifest != false)
+        // {
+        //     m = swapRows(m, swapManifest[0], swapManifest[1]);
+        //     ma = swapRows(ma, swapManifest[0], swapManifest[1]);
+        // }
     
         // progression and stopping 
         if((row + 1)  < m.nrow)
@@ -182,47 +285,145 @@ function REFConvert(m_, ma_)
         }
     }
 
-    let newRank = m.getRank();
-
-    if(newRank != originalRank)
+    if(impossible)
     {
-        console.log("Matrix Not invertable!")
-        return null;
+        console.log("impossible")
     }
     return [m, ma];
-}
 
+}
+function UREFConvert(m_, ma_)
+{
+    // rows and cols swapped so it preforms upper triangularization
+    let m = copyMatrix(m_);
+    let ma = copyMatrix(ma_);
+    let keepGoing = true;
+    let row = 0 // start at row 1
+    let col = 1 // starts at second col
+    let target, ref, rowMultiplier;
+    let impossible = false;
+    // console.log(originalRank)
+
+    while(keepGoing)
+    {
+        // goes row by row
+        // console.log(row, col)
+        target = m.get(row, col); // the number to be zeroed
+        ref = m.get(col, col); // the operation number on the diag
+        let swapManifest = false;
+        // checking if needs to swap rows
+        if(ref == 0)
+        {
+            impossible = true;
+            let newRow;
+            for(let i = 0; i < m.nrow; i++)
+            {
+                let candidate = m.get(i, col);
+                console.log(candidate)
+                if(candidate == target) // checks from the top row of the column
+                {
+                    continue;
+                }
+                else if(candidate != 0)
+                {
+                    impossible = false;
+                    ref = candidate;
+                    newRow = i
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            if(impossible)
+            {
+                keepGoing = false;
+            }
+            else
+            {
+                m = swapRows(m, 0, newRow);
+                ma = swapRows(ma, 0, newRow);
+                swapManifest = [0, 1];
+            }
+        }
+
+
+        rowMultiplier = (target / ref);
+
+        let targetRow = m.getRow(row);
+        let aTargetRow = ma.getRow(row);
+        let refRow = m.getRow(col);
+        let aRefRow = ma.getRow(col);
+        // column by column within row
+        for(let i = 0; i < m.ncol; i++)
+        {
+            // The main matrix
+            m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
+        }
+        for(let i = 0; i < ma.ncol; i++)
+        {           
+            // The augmented part of the matrix
+            ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
+        }
+
+        // // swapping row back if swapped
+
+        // if(swapManifest != false)
+        // {
+        //     m = swapRows(m, swapManifest[0], swapManifest[1]);
+        //     ma = swapRows(ma, swapManifest[0], swapManifest[1]);
+        // }
+    
+        // progression and stopping 
+        if((col + 1)  < m.ncol)
+        {
+            col = col + 1;
+        }
+        else
+        {
+            row = row + 1;
+            col = row + 1;
+        }
+
+        if (row > (m.nrow - 2) && col > (m.ncol - 2))
+        {
+            // should stop when it reaches the last diagonal
+            keepGoing = false;   
+        }
+    }
+    if(impossible)
+    {
+        console.log("impossible")
+        return null;
+    }
+    else
+    {
+        return [m, ma];
+    }  
+}
 function RREFConvert(m_, ma_)
 {
+    // copying the matracies
     let m = copyMatrix(m_);
     let ma1 = copyMatrix(ma_);
-    let ma2 = copyMatrix(ma_);
 
-    console.log("+++++++++++Getting into leading entry REF++++++++++");
+    // getting into ref
     let REFs = REFConvert(m, ma1);
     m = REFs[0];
     ma1 = REFs[1];
+    m.show();
+    ma1.show();
+
+    // scaling by first entry
     [m, ma1] = leadingEntryScale(m, ma1);
-    m.show();
-    ma1.show();
-    console.log("+++++++++++Transposing++++++++++");
-    m = m.transpose();
 
-    console.log("+++++++++++upper triangle++++++++++");
-    [m, ma2] = REFConvert(m, ma2);
+    // upper triangularizarion
+    [m, ma1] = UREFConvert(m, ma1);
 
-    console.log("++++++++++Calculating results+++++++++++");
-
-    m.show();
-    ma2.show();
-
-    ma1 = linearOperation(ma1, ma2, "/")
-
-    m.show();
-    ma1.show();
+    m.FPFix();
+    ma1.FPFix();
 
     return [m, ma1]
-
 }
 
 class Matrix
@@ -242,7 +443,7 @@ class Matrix
                 this.m[i] = [];
                 for(let j = 0; j < ncol; j++)
                 {
-                    this.m[i][j] = null;
+                    this.m[i][j] = 0;
                 }
             }
         }
@@ -457,6 +658,24 @@ class Matrix
 
         return rank;
     }
+
+    FPFix()
+    {
+        for(let r = 0; r < this.nrow; r++)
+        {
+            for(let c = 0; c < this.ncol; c++)
+            {
+                let dp = Math.pow(10, 6);
+                this.m[r][c] = Math.round(this.m[r][c] * dp) / dp;
+            }
+        }
+    }
+
+    invert()
+    {
+        idm = identityMatrix(this.nrow);
+        return RREFConvert(this, idm)[1];
+    }
 }
 
 function copyMatrix(m)
@@ -470,9 +689,11 @@ let m3 = new Matrix(3, 3, [1, 2, 3, 4, 5, 6, 8, 8, 9]);
 let m4 = new Matrix(3, 1, [14, 32, 51]);
 let unitM = new Matrix(3, 3, [1, 1, 1, 1, 1, 1, 1, 1, 1]);
 let unitMa = new Matrix(3, 1, [1, 1, 1]);
-let idm = new Matrix(3, 3, [1, 0, 0, 0, 1, 0, 0, 0, 1])
-let m8 = new Matrix(3, 3, [0,-3, 9, 2, 0, 17, -1, -1, 34])
+let idm = identityMatrix(3)
+let m8 = new Matrix(3, 3, [1, 2, -1, 2, 1, 2, -1, 2, 1])
 let m9 = new Matrix(3, 1, [36, 35, 34])
+
+m1.invert().show()
 
 // m3.show();
 // m4.show();
@@ -507,10 +728,11 @@ let m9 = new Matrix(3, 1, [36, 35, 34])
 
 
 // m4.transpose().show()
-let [m5, m6] = REFConvert(m8, m9);
 
-m5.show();
-m6.show();
+// let [m5, m6] = RREFConvert(m3, idm);
+
+// m5.show();
+// m6.show();
 
 
 
