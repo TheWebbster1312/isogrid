@@ -253,27 +253,27 @@ function REFConvert(m_, ma_)
             }
         }
         target = m.get(row, col); // the number to be zeroed
-        if(target == 0)
-        {
-            continue;
-        }
 
-        rowMultiplier = (target / ref);
-
-        let targetRow = m.getRow(row);
-        let aTargetRow = ma.getRow(row);
-        let refRow = m.getRow(col);
-        let aRefRow = ma.getRow(col);
-        // column by column within row
-        for(let i = 0; i < m.ncol; i++)
+        if (target != 0)
         {
-            // The main matrix
-            m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
-        }
-        for(let i = 0; i < ma.ncol; i++)
-        {           
-            // The augmented part of the matrix
-            ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
+            rowMultiplier = (target / ref);
+
+            let targetRow = m.getRow(row);
+            let aTargetRow = ma.getRow(row);
+            let refRow = m.getRow(col);
+            let aRefRow = ma.getRow(col);
+            // column by column within row
+
+            for(let i = 0; i < m.ncol; i++)
+            {
+                // The main matrix
+                m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
+            }
+            for(let i = 0; i < ma.ncol; i++)
+            {           
+                // The augmented part of the matrix
+                ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
+            }
         }
         // progression and stopping 
         if((row + 1)  < m.nrow)
@@ -356,36 +356,26 @@ function UREFConvert(m_, ma_)
             }
         }
         target = m.get(row, col); // the number to be zeroed
-        if(target == 0)
+        if(target != 0)
         {
-            continue;
+            rowMultiplier = (target / ref);
+
+            let targetRow = m.getRow(row);
+            let aTargetRow = ma.getRow(row);
+            let refRow = m.getRow(col);
+            let aRefRow = ma.getRow(col);
+            // column by column within row
+            for(let i = 0; i < m.ncol; i++)
+            {
+                // The main matrix
+                m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
+            }
+            for(let i = 0; i < ma.ncol; i++)
+            {           
+                // The augmented part of the matrix
+                ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
+            }
         }
-
-        rowMultiplier = (target / ref);
-
-        let targetRow = m.getRow(row);
-        let aTargetRow = ma.getRow(row);
-        let refRow = m.getRow(col);
-        let aRefRow = ma.getRow(col);
-        // column by column within row
-        for(let i = 0; i < m.ncol; i++)
-        {
-            // The main matrix
-            m.set(row, i, (targetRow[i] - (rowMultiplier * refRow[i])));
-        }
-        for(let i = 0; i < ma.ncol; i++)
-        {           
-            // The augmented part of the matrix
-            ma.set(row, i, (aTargetRow[i] - (rowMultiplier * aRefRow[i])));
-        }
-
-        // // swapping row back if swapped
-
-        // if(swapped != false)
-        // {
-        //     m = swapRows(m, swapped[0], swapped[1]);
-        //     ma = swapRows(ma, swapped[0], swapped[1]);
-        // }
     
         // progression and stopping 
         if((col + 1)  < m.ncol)
