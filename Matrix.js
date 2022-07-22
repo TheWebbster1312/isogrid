@@ -232,8 +232,8 @@ function flip_vert(m)
 /**
  * 
  * @param {Matrix} m_ Main matrix
- * @param {Matrix} ma_ 
- * @returns 
+ * @param {Matrix} ma_  augmented part of matrix
+ * @returns a matrix array 0 - the main matrix in REF 1- the Augmented part of the matrix
  */
 function REFConvert(m_, ma_)
 {
@@ -330,6 +330,13 @@ function REFConvert(m_, ma_)
     return [m, ma];
 
 }
+
+/**
+ * 
+ * @param {Matrix} m_ main matrix
+ * @param {Matrix} ma_ Augmented part of matrix
+ * @returns upper triangularized matrix and its augment
+ */
 function UREFConvert(m_, ma_)
 {
     // rows and cols swapped so it preforms upper triangularization
@@ -427,6 +434,13 @@ function UREFConvert(m_, ma_)
         return [m, ma];
     }  
 }
+
+/**
+ * 
+ * @param {Matrix} m_ Main Matrix
+ * @param {Matrix} ma_ Augment
+ * @returns A matrix in RREF and its augment
+ */
 function RREFConvert(m_, ma_)
 {
     // copying the matracies
@@ -450,6 +464,16 @@ function RREFConvert(m_, ma_)
     return [m, ma1]
 }
 
+
+/* 
+===============================================================================
+                                Matrix class
+===============================================================================
+*/
+
+/**
+ * A Class for matracies. can do many functions, Addition, subtraction, multiplication, inversion.
+ */
 class Matrix
 {
     constructor (nrow, ncol, data = null, xint = true)
@@ -661,7 +685,6 @@ class Matrix
             {
                 for(let r = 0; r < this.nrow; r++)
                 {
-                    //console.log("wow", r, c)
                     newData[i] = this.m[r][c] + m2.m[r][c];
                     i++;
                 }
@@ -685,7 +708,6 @@ class Matrix
             {
                 for(let r = 0; r < this.nrow; r++)
                 {
-                    //console.log("wow", r, c)
                     newData[i] = this.m[r][c] - m2.m[r][c];
                     i++;
                 }
@@ -741,17 +763,33 @@ class Matrix
         return RREFConvert(this, idm)[1];
     }
 }
+
+/**
+ * 
+ * @param {Any} data input
+ * @returns clone of data. 
+ */
 function copy(data)
 {
     let x = data
     return x;
 }
 
+/**
+ * 
+ * @param {Matrix} m A matrix you want a copy of
+ * @returns an independant copy of the matrix
+ */
 function copyMatrix(m)
 {
     return new Matrix(m.nrow, m.ncol, m.getData());
 }
 
+/**
+ * 
+ * @param {Array} data an input aray you want a copy of
+ * @returns an independant copy of the array
+ */
 function copyList(data)
 {
     let newData = [];
@@ -775,59 +813,3 @@ let m9 = new Matrix(3, 1, [36, 35, 34])
 m1.show();
 m1.invert().show();
 m1.invert().multiply(m1).show();
-
-
-// m3.show();
-// m4.show();
-
-// flip_vert(m3).show()
-// flip_vert(m4).show()
-
-// let refM3, refM4;
-
-// let tmp = REFConvert(m3, m4)
-// refM3 = tmp[0];
-// refM4 = tmp[1];
-
-
-// tmp = leadingEntryScale(refM3, refM4)
-// refM3 = tmp[0];
-// refM4 = tmp[1];
-
-// refM3.show()
-// refM4.show()
-
-// tmp = REFConvert(refM3.transpose(), m4)
-// refM3 = tmp[0];
-// let refM42 = tmp[1];
-
-// refM3.show()
-// refM42.show()
-
-// linearOperation(refM4, refM42, "/").show()
-
-
-
-
-// m4.transpose().show()
-
-// let [m5, m6] = RREFConvert(m3, idm);
-
-// m5.show();
-// m6.show();
-
-
-
-//m3.transpose().show()
-
-// let augmentedMatrix = REFConvert(m3, m4)
-// leadingEntryScale(augmentedMatrix[0], augmentedMatrix[1])
-
-
-// m3.show();
-// m4.show();
-
-// console.log(m1)
-// console.log(m2)
-
-//console.log(m1.add(m2))
