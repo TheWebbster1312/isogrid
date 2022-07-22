@@ -765,6 +765,113 @@ class Matrix
 }
 
 /**
+ * A matrix specifically for tiles.
+ */
+class TileMatrix
+{
+    constructor (nrow, ncol)
+    {   
+        this.nrow = nrow;
+        this.ncol = ncol;
+        this.capacity = (ncol * nrow);
+        this.m = [];
+        this.xint = xint;
+        
+        // making null matrix
+        for(let i = 0; i < nrow; i++)
+        {
+            this.m[i] = [];
+            for(let j = 0; j < ncol; j++)
+            {
+                this.m[i][j] = null;
+            }
+        }
+        //making non null matrix
+    }
+    // object functions
+    show()
+    {
+        let content = "";
+        for(const element of this.m)
+        {
+            content += (element.toString() + "\n");
+        }
+
+        console.log(content)
+    }
+
+    get(row, col)
+    {
+        return  copy(this.m[row][col])
+    }
+
+    getRow(row)
+    {
+        return copyList(this.m[row])
+    }
+
+    getCol(col)
+    {
+        return this.m.map(function(value, index){return value[col]});
+    }
+
+    getData()
+    {
+        let data = [];
+        for(let i = 0; i < this.nrow; i++)
+        {
+            data = data.concat(this.getRow(i));
+        }
+        return copyList(data);
+    }
+
+    set(row, col, data)
+    {
+        this.m[row][col] = data;
+    }
+
+    setRow(row, data)
+    {
+        // validation
+        if(data.length != this.ncol)
+        {
+            return null;
+        }
+        
+        if(row - 1 > this.nrow)
+        {
+            return null;
+        }
+
+        // setting row
+        for(let i = 0; i < this.ncol; i++)
+        {
+            this.m[row][i] = data[i];
+        }
+    }
+
+    setCol(col, data)
+    {
+        // validation
+        if(data.length != this.nrow)
+        {
+            return null;
+        }
+        
+        if(col - 1 > this.nrow)
+        {
+            return null;
+        }
+
+        // setting col
+        for(let i = 0; i < this.nrow; i++)
+        {
+            this.m[i][col] = data[i];
+        }
+    }
+}
+
+/**
  * 
  * @param {Any} data input
  * @returns clone of data. 
