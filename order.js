@@ -38,6 +38,18 @@ function orderPrioritise(entities)
     }
 }
 
+function randomGen(n)
+{
+    let nums = [];
+    for(let i = 0; i < n; i++)
+    {
+        nums.push(Math.round(Math.random()*10000))
+    }
+    return nums;
+}
+
+nums = randomGen(1000)
+
 arr = [234, 124, 123, 123, 123, 245, 513,  123, 124, 5643, 123, 156, 167, 157, 167, 6, 1, 5, 9, 6, 1, 10, 51, 34, 15]
 
 console.log(orderPrioritise(arr))
