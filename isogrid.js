@@ -1,4 +1,4 @@
-var canvas = document.getElementById("Canvas")
+let canvas = document.getElementById("Canvas")
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -9,11 +9,14 @@ const XYScalerMatrix = IJScalerMatrix.invert();
 const RotationMatrix = new Matrix(2, 2, [0, -1, 1, 0]);
 const offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2]);
 offset.toInt();
-var reorderTiles = false;
+const c = canvas.getContext("2d")
+let reorderTiles = false;
+
 
 function keypressHandler(e){
     switch(e.which)
     {
+        // R for rotate
         case 114:
             for(const element of tiles)
             {
@@ -22,11 +25,17 @@ function keypressHandler(e){
             }
             animateFrame();
             break;
+        
+        // P for mouse coords
+        case 112:
+            console.log(mouse)
+            break;
         default:
             console.log("not recognised")
     }
 }
 
+// sprite declarations
 const stoneSprite = new Image();
 stoneSprite.src = "stone.bmp";
 
@@ -35,6 +44,10 @@ spriteSprite.src = "sprite.bmp";
 
 const grassSprite = new Image();
 grassSprite.src = "grass.bmp";
+
+const mouseSprite = new Image();
+mouseSprite.src = "mousesprite.bmp";
+
 
 function toXY(i, j, size)
 {
@@ -50,12 +63,10 @@ function toIJ(x, y, xint = false)
     let convertionMat = XYScalerMatrix.multiply(1/32);
     if(!xint){convertionMat.xint = false}
 
-    xyMat = new Matrix(2, 1, [x, y]).sub(offset);
+    let xyMat = new Matrix(2, 1, [x, y]).sub(offset);
 
     return convertionMat.multiply(xyMat);
 }
-
-var c = canvas.getContext("2d")
 
 class Tile{
     constructor(i, j, k = 0, sprite = stoneSprite) 
@@ -65,7 +76,7 @@ class Tile{
         this.k = k;
         this.size = 32; 
         this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size, offset)
+        [this.x, this.y] = toXY(this.i, this.j, this.size)
         this.orderPriority = this.y + (this.k*canvas.height);
         this.sprite = sprite
         this.updated = false;
@@ -77,7 +88,7 @@ class Tile{
             this.i = i;
             this.j = j;
             this.k = k;
-            this.changed = true
+            this.updated = true
         }
     }
     deltaZ(d)
@@ -87,58 +98,73 @@ class Tile{
     }
     rotate()
     {
-        this.changed = true
-        var vector_coord = new Matrix(2, 1, [this.i, this.j]);
-        var transformed_coord_vector = RotationMatrix.multiply(vector_coord);
+        this.updated = true
+        let vector_coord = new Matrix(2, 1, [this.i, this.j]);
+        let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
 
         [this.i, this.j] = transformed_coord_vector.getCol(0);
 
         this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size, offset)
+        [this.x, this.y] = toXY(this.i, this.j, this.size)
         this.orderPriority = this.y + (this.k*canvas.height);
     }
     draw() 
     {
         this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size, offset)
+        [this.x, this.y] = toXY(this.i, this.j, this.size)
         this.y -= this.z
-    
+        this.updated = false;
         c.drawImage(this.sprite, this.x, this.y); 
     }
 }
 
-var tiles = []
+let tiles = []
 
-function drawSquare(iStart, iEnd, jStart, jEnd, kStart = 0, kEnd = 0, sprite = stoneSprite)
+/**
+ * 
+ * @param {Number} i_ Start for i coord
+ * @param {Number} j_ start for j
+ * @param {Number} k_ start for k*
+ * @param {Number} di length of 1*
+ * @param {Number} dj length of j*
+ * @param {Number} dk length of k*
+ * * = optional
+ * @param {Image} sprite the sprite used* 
+ */
+function addTiles(i_, j_, k_ = 0, di = 1, dj = 1, dk = 1, sprite = stoneSprite)
 {
-    for(var j = jStart; j < jEnd + 1; j++)
+    for(let i = i_; i < (i_ + di); i++)
     {
-        for(var i = iStart; i < iEnd + 1; i++)
+        for(let j = j_; j < (j_ + dj) ; j++)
         {
-            for(var k = kStart; k < kEnd + 1; k++){
+            for(let k = k_; k < (k_ + dk); k++)
+            {
                 tiles.push(new Tile(i, j, k, sprite));
             }
         }
     }
 }
 
-drawSquare(-10, 9, -10, 10, -1, 0);
+//drawSquare(-10, 9, -10, 10, -1, 0);
 //drawSquare(-10, 10, -10, -9, 0, 10)
-drawSquare(0, 2, -1, 2, 1, 1, spriteSprite)
-grassTile = new Tile(0, 1, 2, grassSprite)
-redTile = new Tile(0, 1, 1, spriteSprite)
-redTile2 = new Tile(0, 10, 1, spriteSprite)
-redTile3 = new Tile(9, 1, 1, spriteSprite)
-mouseTile = new Tile(0, 0, 0, grassSprite)
-tiles.push(grassTile)
-tiles.push(redTile)
-tiles.push(redTile2)
-tiles.push(redTile3)
-tiles.push(mouseTile)
-drawSquare(2, 2, 2, 2, 2, 2)
-drawSquare(-11, 10, 11, 11, 0, 5)
-drawSquare(10, 10, -11, 11, 0, 5)
-//drawSquare(-11, -11, -11, 11, 0, 15)
+//drawSquare(0, 2, -1, 2, 1, 1, spriteSprite)
+let grassTile = new Tile(0, 1, 2, grassSprite)
+let redTile = new Tile(0, 1, 1, spriteSprite)
+let redTile2 = new Tile(0, 10, 1, spriteSprite)
+let redTile3 = new Tile(9, 1, 1, spriteSprite)
+let mouseTile = new Tile(0, 0, 0, mouseSprite)
+// tiles.push(grassTile)
+// tiles.push(redTile)
+// tiles.push(redTile2)
+// tiles.push(redTile3)
+// drawSquare(2, 2, 2, 2, 2, 2)
+// drawSquare(-11, 10, 11, 11, 0, 5)
+// drawSquare(10, 10, -11, 11, 0, 5)
+//d   rawSquare(-11, -11, -11, 11, 0, 15)
+
+addTiles(-5, -5, 0, 20, 10, 1)
+addTiles(-4, -4, 1, 5, 5, 1, spriteSprite)
+addTiles(-3, -3, 2, 3, 3, 1, grassSprite)
 
 function sortOrderPriority(nums_)
 {
@@ -169,15 +195,17 @@ function animateFrame()
     {
         drawArray = tiles;
     }
+    drawArray.push(mouseTile)
     
     for(const element of drawArray)
     {
-        if(element.changed)
+        if(element.updated)
         {
             element.draw();
         }
     }
 }
+
 
 animateFrame()
 
