@@ -1,6 +1,8 @@
 var mouse = {
 	x:undefined,
-	y:undefined
+	y:undefined,
+	i: undefined,
+	j: undefined
 }
 //=======================================
 window.addEventListener('mousemove',
@@ -10,7 +12,6 @@ window.addEventListener('mousemove',
 		let mouseMatrix = toIJ(mouse.x, mouse.y, true);
 		let [i, j] = mouseMatrix.getCol(0);
 		mouseTile.updateCoords(i, j)
-		animateFrame();
 ;})
 
 // function findTile(x, y)

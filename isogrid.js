@@ -20,7 +20,6 @@ function keypressHandler(e){
                 element.rotate();
                 reorderTiles = true;
             }
-            animateFrame();
             break;
         default:
             console.log("not recognised")
@@ -100,10 +99,14 @@ class Tile{
     draw() 
     {
         this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size, offset)
-        this.y -= this.z
-    
+        [this.x, this.y] = toXY(this.i, this.j, this.size, offset);
+        this.y -= this.z;
+
         c.drawImage(this.sprite, this.x, this.y); 
+    }
+    update()
+    {
+        this.draw();
     }
 }
 
@@ -134,7 +137,6 @@ tiles.push(grassTile)
 tiles.push(redTile)
 tiles.push(redTile2)
 tiles.push(redTile3)
-tiles.push(mouseTile)
 drawSquare(2, 2, 2, 2, 2, 2)
 drawSquare(-11, 10, 11, 11, 0, 5)
 drawSquare(10, 10, -11, 11, 0, 5)
@@ -159,6 +161,7 @@ function sortOrderPriority(nums_)
 
 function animateFrame()
 {
+    requestAnimationFrame(animateFrame);
     let drawArray;
     c.clearRect(0,0,canvas.width, canvas.height);
     if(reorderTiles)
@@ -172,13 +175,9 @@ function animateFrame()
     
     for(const element of drawArray)
     {
-        if(element.changed)
-        {
-            element.draw();
-        }
+        element.draw();
     }
+    mouseTile.draw();
 }
 
-animateFrame()
-
-
+animateFrame();
