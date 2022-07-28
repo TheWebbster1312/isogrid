@@ -781,13 +781,13 @@ class TileMatrix
         this.ncol = ncol;
         this.capacity = (ncol * nrow);
         this.m = [];
-        this.xint = xint;
+        this.isNull = true;
         
         // making null matrix
-        for(let i = 0; i < nrow; i++)
+        for(let i = 0; i <= nrow; i++)
         {
             this.m[i] = [];
-            for(let j = 0; j < ncol; j++)
+            for(let j = 0; j <= ncol; j++)
             {
                 this.m[i][j] = null;
             }
@@ -800,7 +800,17 @@ class TileMatrix
         let content = "";
         for(const element of this.m)
         {
-            content += (element.toString() + "\n");
+            for(const element2 of element)
+            {
+                if(element2 == null)
+                {
+                    content += "□ ";
+                }
+                else{
+                    content += "■ ";
+                }
+            }
+            content += "\n";
         }
 
         console.log(content)
@@ -833,6 +843,7 @@ class TileMatrix
 
     set(row, col, data)
     {
+        this.isNull = false;
         this.m[row][col] = data;
     }
 
@@ -850,6 +861,7 @@ class TileMatrix
         }
 
         // setting row
+        this.isNull = false;
         for(let i = 0; i < this.ncol; i++)
         {
             this.m[row][i] = data[i];
@@ -870,6 +882,7 @@ class TileMatrix
         }
 
         // setting col
+        this.isNull = false;
         for(let i = 0; i < this.nrow; i++)
         {
             this.m[i][col] = data[i];

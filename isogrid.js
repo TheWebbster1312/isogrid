@@ -10,7 +10,7 @@ const RotationMatrix = new Matrix(2, 2, [0, -1, 1, 0]);
 const offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2]);
 offset.toInt();
 const c = canvas.getContext("2d")
-let reorderTiles = false;
+let reorderTiles = true;
 
 
 function keypressHandler(e){
@@ -21,13 +21,13 @@ function keypressHandler(e){
             for(const element of tiles)
             {
                 element.rotate();
-                reorderTiles = true;
             }
             break;
         
         // P for mouse coords
         case 112:
             console.log(mouse)
+            console.log(mouseTile.getInfo())
             break;
         default:
             console.log("not recognised")
@@ -80,6 +80,29 @@ class Tile{
         this.sprite = sprite
         this.updated = false;
     }
+
+    getCoords()
+    {
+        return [this.i, this.j, this.k]
+    }
+
+    getInfo()
+    {
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            x: this.x,
+            y: this.y,
+            z: this.z
+           }
+    }
+
+    getSprite()
+    {
+        return this.sprite.currentSrc.replace(this.sprite.baseURI, "")
+    }
+
     updateCoords(i, j, k = 0)
     {
         if(i != this.i || j != this.j || k != this.k)
@@ -88,6 +111,8 @@ class Tile{
             this.j = j;
             this.k = k;
             this.updated = true
+            reorderTiles = true
+            this.orderPriority = this.y + (this.k*canvas.height);
         }
     }
     deltaZ(d)
@@ -97,6 +122,10 @@ class Tile{
     }
     rotate()
     {
+        if(!reorderTiles) // if false make ture
+        {
+            reorderTiles = true;
+        }
         this.updated = true
         let vector_coord = new Matrix(2, 1, [this.i, this.j]);
         let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
@@ -121,6 +150,75 @@ class Tile{
     }
 }
 
+let mouseTile = new Tile(0, 0, 0, mouseSprite);
+
+// tile grid stuff.
+
+class BlockSpace
+{
+    constructor()
+    {
+        this. iMax = 20;
+        this.jMax = 20;
+        this.kMax = 20;
+        this.iMin = -20;
+        this.jMin = -20;
+        this.kMin = -20;
+
+        this.iSize = Math.abs(this.iMax) + Math.abs(this.iMin);
+        this.jSize = Math.abs(this.jMax) + Math.abs(this.jMin);
+        this.kSize = Math.abs(this.kMax) + Math.abs(this.kMin);
+
+        this.space = []
+
+        for (let step = 0; step < this.kSize + 1; step++)
+        {
+            this.space[step] = new TileMatrix(this.iSize, this.jSize);
+        }
+    }
+
+    get(i, j, k)
+    {
+        return this.space[k - this.kMin].get(i - this.iMin, j - this.jMin);
+    }
+
+    getTop(i, j)
+    {
+        for (let step = this.kSize; step > -1; step--)
+        {
+            let target = this.get(i, j, step + this.kMin)
+            if(target != null)
+            {
+                return target;
+            }
+        }
+        return null;
+    }
+
+    set(i, j, k, item)
+    {
+        this.space[k - this.kMin].set(i - this.iMin, j - this.jMin, item);
+    }
+    
+    show()
+    {
+        for (let step = this.kSize; step > -1; step--)
+        {
+            let target = this.space[step]
+            if(!target.isNull) //  if the tilematrix is populated
+            {
+                console.log(step + this.kMin)
+                target.show();
+            }
+        }
+    }
+}
+
+
+let blockSpace = new BlockSpace();
+
+
+
 let tiles = []
 
 /**
@@ -142,7 +240,9 @@ function addTiles(i_, j_, k_ = 0, di = 1, dj = 1, dk = 1, sprite = stoneSprite)
         {
             for(let k = k_; k < (k_ + dk); k++)
             {
-                tiles.push(new Tile(i, j, k, sprite));
+                let tile = new Tile(i, j, k, sprite)
+                tiles.push(tile);
+                blockSpace.set(i, j, k, tile)
             }
         }
     }
@@ -150,19 +250,17 @@ function addTiles(i_, j_, k_ = 0, di = 1, dj = 1, dk = 1, sprite = stoneSprite)
 
 //drawSquare(-10, 9, -10, 10, -1, 0);
 //drawSquare(-10, 10, -10, -9, 0, 10)
-addTiles(0, 2, -1, 2, 1, 1, spriteSprite)
-grassTile = new Tile(0, 1, 2, grassSprite)
-redTile = new Tile(0, 1, 1, spriteSprite)
-redTile2 = new Tile(0, 10, 1, spriteSprite)
-redTile3 = new Tile(9, 1, 1, spriteSprite)
-mouseTile = new Tile(0, 0, 0, grassSprite)
-tiles.push(grassTile)
-tiles.push(redTile)
-tiles.push(redTile2)
-tiles.push(redTile3)
-addTiles(2, 2, 2, 2, 2, 2)
-addTiles(-11, 10, 11, 11, 0, 5)
-addTiles(10, 10, -11, 11, 0, 5)
+
+addTiles(0, 1, 2, 1, 1, 1, grassSprite)
+addTiles(0, 1, 1, 1, 1, 1, spriteSprite)
+addTiles(0, 10, 1, 1, 1, 1, spriteSprite)
+addTiles(10, 0, 1, 1, 1, 1, spriteSprite)
+
+
+
+addTiles(-5, -5, 0, 10, 10, 1);
+
+
 //drawSquare(-11, -11, -11, 11, 0, 15)
 
 function sortOrderPriority(nums_)
@@ -189,13 +287,13 @@ function animateFrame()
     c.clearRect(0,0,canvas.width, canvas.height);
     if(reorderTiles)
     {
-        drawArray = sortOrderPriority(tiles);
+        reorderTiles = false;
     }
     else
     {
         drawArray = tiles;
     }
-    drawArray.push(mouseTile)
+    drawArray = sortOrderPriority(tiles);
     
     for(const element of drawArray)
     {
