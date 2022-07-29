@@ -12,6 +12,7 @@ window.addEventListener('mousemove',
 		mouse.y = event.y;
 		let mouseMatrix = toIJ(mouse.x-16, mouse.y-8, true);
 		let [i, j] = mouseMatrix.getCol(0);
+
 		topBlock = blockSpace.getTop(i, j);
 		let k;
 		if(topBlock != null)
@@ -22,9 +23,9 @@ window.addEventListener('mousemove',
 		{
 			k = 0;
 		}
-		mouse.i = i
-		mouse.j = j
-		mouse.k = k
+		mouse.i = i;
+		mouse.j = j;
+		mouse.k = k;
 		mouseTile.updateCoords(i, j, k)
 ;})
 

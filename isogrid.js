@@ -11,6 +11,21 @@ const offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2]);
 offset.toInt();
 const c = canvas.getContext("2d")
 let reorderTiles = true;
+let cameraVector = colVector([1, 1, 1])
+let blockSpaceOrientation = 0;
+
+rotate()
+{
+    if(blockSpaceOrientation == 3)
+    {
+        blockSpaceOrientation = 0;
+    }
+    else
+    {
+        blockSpaceOrientation++;
+    }
+    updateTiles();
+}
 
 
 function keypressHandler(e){
@@ -47,6 +62,11 @@ grassSprite.src = "grass.bmp";
 const mouseSprite = new Image();
 mouseSprite.src = "mousesprite.bmp";
 
+updateTiles()
+{
+    blockSpace.
+}
+
 
 function toXY(i, j, size)
 {
@@ -75,15 +95,16 @@ class Tile{
         this.k = k;
         this.size = 32; 
         this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size)
+        [this.x, this.y] = toXY(this.i, this.j, this.size);
         this.orderPriority = this.y + (this.k*canvas.height);
-        this.sprite = sprite
+        this.sprite = sprite;
         this.updated = false;
+        this.visable = true;
     }
 
     getCoords()
     {
-        return [this.i, this.j, this.k]
+        return [this.i, this.j, this.k];
     }
 
     getInfo()
@@ -94,8 +115,14 @@ class Tile{
             k: this.k,
             x: this.x,
             y: this.y,
-            z: this.z
-           }
+            z: this.z,
+            sprite: this.getSprite()
+           };
+    }
+
+    getVectorCoords()
+    {
+        return colVector(this.getCoords());
     }
 
     getSprite()
@@ -110,16 +137,17 @@ class Tile{
             this.i = i;
             this.j = j;
             this.k = k;
-            this.updated = true
-            reorderTiles = true
-            this.orderPriority = this.y + (this.k*canvas.height);
+            this.updated = true;
+            reorderTiles = true;
         }
     }
+
     deltaZ(d)
     {
         this.k += d;
         this.z = (this.k * this.size / 2);
     }
+
     rotate()
     {
         if(!reorderTiles) // if false make ture
@@ -127,15 +155,29 @@ class Tile{
             reorderTiles = true;
         }
         this.updated = true
-        let vector_coord = new Matrix(2, 1, [this.i, this.j]);
+        let vector_coord = colVector[this.i, this.j]);
         let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
 
         [this.i, this.j] = transformed_coord_vector.getCol(0);
 
         this.z = this.k * this.size / 2;
         [this.x, this.y] = toXY(this.i, this.j, this.size)
-        this.orderPriority = this.y + (this.k*canvas.height);
     }
+
+    checkVisablity()
+    {
+        let intersections = this.lineTo(cameraVector);
+
+        if(intersections.length > 0)
+        {
+            this.visable = false;
+        }
+        else
+        {
+            this.visablity = true;
+        }
+    }
+
     draw() 
     {
         this.z = this.k * this.size / 2;
@@ -144,9 +186,35 @@ class Tile{
         this.updated = false;
         c.drawImage(this.sprite, this.x, this.y); 
     }
+
     update()
     {
+        this.orderPriority = this.y + (this.k*canvas.height);
+        this.checkVisablity();
         this.draw();
+    }
+
+    lineTo(vector)
+    {
+        let pathHead = this.getVectorCoords().add(vector);
+        
+        let atEdge = false;
+
+        let intersections = [];
+
+        while(!atEdge)
+        {
+            atEdge = blockSpace.atEdge(pathHead);
+            target = blockSpace.get(...pathHead.getCol(0));
+            console.log(target, pathHead.show())
+            if(target != null)
+            {
+                intersections.push(target);
+            }
+            pathHead = pathHead.add(vector);
+        }
+        
+        return intersections;
     }
 }
 
@@ -179,7 +247,20 @@ class BlockSpace
 
     get(i, j, k)
     {
-        return this.space[k - this.kMin].get(i - this.iMin, j - this.jMin);
+        if(!this.atEdge(colVector([i, j, k])))
+        {
+            return this.space[k - this.kMin].get(i - this.iMin, j - this.jMin);
+        }
+    }
+
+    getMaxVector()
+    {
+        return colVector([this.iMax, this.jMax, this.kMax]);
+    }
+
+    getMinVector()
+    {
+        return colVector([this.iMin, this.jMin, this.kMin]);
     }
 
     getTop(i, j)
@@ -211,6 +292,21 @@ class BlockSpace
                 target.show();
             }
         }
+    }
+
+    atEdge(vector)
+    {
+        let returnBool = false;
+
+        if(this.getMaxVector().get(0, 0) < vector.get(0, 0)) {returnBool = true};
+        if(this.getMaxVector().get(1, 0) < vector.get(1, 0)) {returnBool = true};
+        if(this.getMaxVector().get(2, 0) < vector.get(2, 0)) {returnBool = true};
+
+        if(this.getMinVector().get(0, 0) > vector.get(0, 0)) {returnBool = true};
+        if(this.getMinVector().get(1, 0) > vector.get(1, 0)) {returnBool = true};
+        if(this.getMinVector().get(2, 0) > vector.get(2, 0)) {returnBool = true};
+
+        return returnBool;
     }
 }
 

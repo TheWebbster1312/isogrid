@@ -8,6 +8,12 @@ one
 */
 
 // will multipy each element in an array with its respective partner, and return the sum
+
+function colVector(data)
+{
+    return new Matrix(data.length, 1, data);
+}
+
 function arMultiply(ar1, ar2)
 {   
     var sumation = 0
