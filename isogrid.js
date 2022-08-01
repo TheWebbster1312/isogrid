@@ -14,7 +14,7 @@ let reorderTiles = true;
 let cameraVector = colVector([1, 1, 1])
 let blockSpaceOrientation = 0;
 
-rotate()
+function rotate()
 {
     if(blockSpaceOrientation == 3)
     {
@@ -42,7 +42,7 @@ function keypressHandler(e){
         // P for mouse coords
         case 112:
             console.log(mouse)
-            console.log(mouseTile.getInfo())
+            console.log(blockSpace.get(...mouseTile.getCoords()).getInfo())
             break;
         default:
             console.log("not recognised")
@@ -62,9 +62,12 @@ grassSprite.src = "grass.bmp";
 const mouseSprite = new Image();
 mouseSprite.src = "mousesprite.bmp";
 
-updateTiles()
+function updateTiles()
 {
-    blockSpace.
+    for(const element of tiles)
+    {
+        element.checkVisablity();
+    }  
 }
 
 
@@ -116,7 +119,8 @@ class Tile{
             x: this.x,
             y: this.y,
             z: this.z,
-            sprite: this.getSprite()
+            sprite: this.getSprite(),
+            visable: this.visable
            };
     }
 
@@ -155,10 +159,13 @@ class Tile{
             reorderTiles = true;
         }
         this.updated = true
-        let vector_coord = colVector[this.i, this.j]);
+        let vector_coord = colVector([this.i, this.j]);
         let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
+        blockSpace.set(...this.getCoords(), null)
 
         [this.i, this.j] = transformed_coord_vector.getCol(0);
+
+        blockSpace.set(...this.getCoords(), this);
 
         this.z = this.k * this.size / 2;
         [this.x, this.y] = toXY(this.i, this.j, this.size)
@@ -167,15 +174,15 @@ class Tile{
     checkVisablity()
     {
         let intersections = this.lineTo(cameraVector);
-
         if(intersections.length > 0)
         {
             this.visable = false;
         }
         else
         {
-            this.visablity = true;
+            this.visable = true;
         }
+
     }
 
     draw() 
@@ -206,7 +213,6 @@ class Tile{
         {
             atEdge = blockSpace.atEdge(pathHead);
             target = blockSpace.get(...pathHead.getCol(0));
-            console.log(target, pathHead.show())
             if(target != null)
             {
                 intersections.push(target);
@@ -238,6 +244,7 @@ class BlockSpace
         this.kSize = Math.abs(this.kMax) + Math.abs(this.kMin);
 
         this.space = []
+        this.tile
 
         for (let step = 0; step < this.kSize + 1; step++)
         {
@@ -397,5 +404,7 @@ function animateFrame()
     }
     mouseTile.draw();
 }
+
+updateTiles();
 
 animateFrame();
