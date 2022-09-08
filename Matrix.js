@@ -810,10 +810,10 @@ class TileMatrix
             {
                 if(element2 == null)
                 {
-                    content += "□ ";
+                    content += "` ";
                 }
                 else{
-                    content += "■ ";
+                    content += "@ ";
                 }
             }
             content += "\n";

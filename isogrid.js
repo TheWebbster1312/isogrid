@@ -27,6 +27,11 @@ function rotate()
     updateTiles();
 }
 
+function clearScreen()
+{
+    c.clearRect(0,0,canvas.width, canvas.height);
+}
+
 
 function keypressHandler(e){
     switch(e.which)
@@ -91,7 +96,7 @@ function toIJ(x, y, xint = false)
 }
 
 class Tile{
-    constructor(i, j, k = 0, sprite = stoneSprite) 
+    constructor(i, j, k = 0, sprite = stoneSprite, parent) 
     {
         this.i = i;
         this.j = j;
@@ -103,6 +108,7 @@ class Tile{
         this.sprite = sprite;
         this.updated = false;
         this.visable = true;
+        this.blockSpace = parent
     }
 
     getCoords()
@@ -161,17 +167,17 @@ class Tile{
         this.updated = true
         let vector_coord = colVector([this.i, this.j]);
         let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
-        blockSpace.set(...this.getCoords(), null)
+        this.blockSpace.set(...this.getCoords(), null)
 
         [this.i, this.j] = transformed_coord_vector.getCol(0);
 
-        blockSpace.set(...this.getCoords(), this);
+        this.blockSpace.set(...this.getCoords(), this);
 
         this.z = this.k * this.size / 2;
         [this.x, this.y] = toXY(this.i, this.j, this.size)
     }
 
-    checkVisablity()
+    checkVisablity() // efectively cheking lineto camera
     {
         let intersections = this.lineTo(cameraVector);
         if(intersections.length > 0)
@@ -211,8 +217,8 @@ class Tile{
 
         while(!atEdge)
         {
-            atEdge = blockSpace.atEdge(pathHead);
-            target = blockSpace.get(...pathHead.getCol(0));
+            atEdge = this.blockSpace.atEdge(pathHead);
+            target = this.blockSpace.get(...pathHead.getCol(0));
             if(target != null)
             {
                 intersections.push(target);
@@ -243,13 +249,20 @@ class BlockSpace
         this.jSize = Math.abs(this.jMax) + Math.abs(this.jMin);
         this.kSize = Math.abs(this.kMax) + Math.abs(this.kMin);
 
-        this.space = []
-        this.tile
-
+        this.space = [];
+        
+        this.visable = true;
+        
+        // each step is a vertical layer
         for (let step = 0; step < this.kSize + 1; step++)
         {
             this.space[step] = new TileMatrix(this.iSize, this.jSize);
         }
+    }
+
+    setVisability(visablility)
+    {
+        this.visable = visablility;
     }
 
     get(i, j, k)
@@ -315,6 +328,59 @@ class BlockSpace
 
         return returnBool;
     }
+
+    addTiles(i_, j_, k_ = 0, di = 1, dj = 1, dk = 1, sprite = stoneSprite)
+    {
+        for(let i = i_; i < (i_ + di); i++)
+        {
+            for(let j = j_; j < (j_ + dj) ; j++)
+            {
+                for(let k = k_; k < (k_ + dk); k++)
+                {
+                    let tile = new Tile(i, j, k, sprite, this)
+                    tiles.push(tile);
+                    this.set(i, j, k, tile)
+                }
+            }
+        }
+    }
+
+    getData()
+    {
+        let returnData = [];
+        for(let layer = 0; layer < this.kSize; layer++)
+        {
+            if(this.space[layer].isNull) {continue;}
+
+            returnData.push(this.space[layer].getData().filter(Boolean));
+        }
+
+        return returnData;
+    }
+
+    draw()
+    {
+        //Start from bottom slice
+        for(const layer of this.getData())
+        {
+            this.draw_layer(layer)
+
+        }
+    }
+
+    draw_layer(layer)
+    {
+        let orderedLayerList = sortOrderPriority(layer);
+
+        for(const item of orderedLayerList)
+        {
+            if(item.visable)
+            {
+                item.draw();
+            }
+        }
+    }
+
 }
 
 
@@ -335,33 +401,18 @@ let tiles = []
  * * = optional
  * @param {Image} sprite the sprite used* 
  */
-function addTiles(i_, j_, k_ = 0, di = 1, dj = 1, dk = 1, sprite = stoneSprite)
-{
-    for(let i = i_; i < (i_ + di); i++)
-    {
-        for(let j = j_; j < (j_ + dj) ; j++)
-        {
-            for(let k = k_; k < (k_ + dk); k++)
-            {
-                let tile = new Tile(i, j, k, sprite)
-                tiles.push(tile);
-                blockSpace.set(i, j, k, tile)
-            }
-        }
-    }
-}
 
 //drawSquare(-10, 9, -10, 10, -1, 0);
 //drawSquare(-10, 10, -10, -9, 0, 10)
 
-addTiles(0, 1, 2, 1, 1, 1, grassSprite)
-addTiles(0, 1, 1, 1, 1, 1, spriteSprite)
-addTiles(0, 10, 1, 1, 1, 1, spriteSprite)
-addTiles(10, 0, 1, 1, 1, 1, spriteSprite)
+blockSpace.addTiles(0, 1, 2, 1, 1, 1, grassSprite)
+blockSpace.addTiles(0, 1, 1, 1, 1, 1, spriteSprite)
+blockSpace.addTiles(0, 10, 1, 1, 1, 1, spriteSprite)
+blockSpace.addTiles(10, 0, 1, 1, 1, 1, spriteSprite)
 
 
 
-addTiles(-5, -5, 0, 10, 10, 1);
+blockSpace.addTiles(-5, -5, 0, 10, 10, 1);
 
 
 //drawSquare(-11, -11, -11, 11, 0, 15)
@@ -405,6 +456,5 @@ function animateFrame()
     mouseTile.draw();
 }
 
-updateTiles();
+updateTiles(blockSpace.getData());
 
-animateFrame();
