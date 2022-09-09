@@ -18,7 +18,7 @@ function sortOrderPriority(nums_)
 function animateFrame()
 {
     let drawArray;
-    c.clearRect(0,0,canvas.width, canvas.height);
+    clearScreen();
     if(reorderTiles)
     {
         drawArray = sortOrderPriority(tiles);
