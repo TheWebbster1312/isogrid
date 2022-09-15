@@ -770,6 +770,44 @@ class Matrix
     }
 }
 
+class ColumnVector extends Matrix
+{
+    constructor(size, data = null, xint = false)
+    {
+        super(size, 1, data = data, xint = xint)
+    }
+
+    get(number)
+    {
+        return this.m[number][0]
+    }
+
+    getMagnatude()
+    {
+        let total = 0
+        for(const number of this.getData())
+        {
+            total += Math.pow(number, 2);
+        }
+
+        return Math.sqrt(total)
+    }
+
+    getNormalized()
+    {
+       let newData = []
+
+       let magnatude = this.getMagnatude()
+       
+       for(const number of this.getData())
+       {
+        newData.push(number/magnatude)
+       }
+
+       return new ColumnVector(this.nrow, newData)
+    }
+}
+
 /* 
 ===============================================================================
                             Tile Matrix class

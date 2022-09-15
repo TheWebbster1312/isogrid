@@ -14,27 +14,16 @@ function sortOrderPriority(nums_)
     });
     return nums;
 }
+let spaces = [blockSpace]
+
 
 function animateFrame()
 {
-    let drawArray;
+    requestAnimationFrame(animateFrame);
     clearScreen();
-    if(reorderTiles)
+    for(let space of spaces)
     {
-        drawArray = sortOrderPriority(tiles);
-    }
-    else
-    {
-        drawArray = tiles;
-    }
-    drawArray.push(mouseTile)
-    
-    for(const element of drawArray)
-    {
-        if(element.updated)
-        {
-            element.draw();
-        }
+        space.draw();
     }
 }
 
@@ -47,3 +36,4 @@ function clearScreen()
 {
     c.clearRect(0,0,canvas.width, canvas.height);
 }
+animateFrame();

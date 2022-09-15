@@ -6,12 +6,12 @@ document.addEventListener("keypress", keypressHandler);
 
 const IJScalerMatrix = new Matrix(2, 2, [-0.5, 0.5, 0.25, 0.25]);
 const XYScalerMatrix = IJScalerMatrix.invert();
-const RotationMatrix = new Matrix(2, 2, [0, -1, 1, 0]);
+const RotationMatrix = new Matrix(2, 2, [1, 0, 0, 1]);
 const offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2]);
 offset.toInt();
 const c = canvas.getContext("2d")
 let reorderTiles = true;
-let cameraVector = colVector([1, 1, 1])
+let cameraVector = new ColumnVector(3, [1, 1, 1])
 let blockSpaceOrientation = 0;
 
 function rotate()
@@ -24,7 +24,21 @@ function rotate()
     {
         blockSpaceOrientation++;
     }
-    updateTiles();
+    update_rotation_matrix();
+    RotationMatrix.show()
+    updateTiles(blockSpace.getData());
+}
+
+function update_rotation_matrix()
+{
+    RotationMatrix.set(0, 0, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
+    RotationMatrix.set(0, 1, Math.round(Math.sin((Math.PI * blockSpaceOrientation)/2)));
+    RotationMatrix.set(1, 0, Math.round(-Math.sin((Math.PI * blockSpaceOrientation)/2)));
+    RotationMatrix.set(1, 1, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
+
+    let [i, j] = RotationMatrix.multiply(colVector([1, 1])).getCol(0)
+    cameraVector.set(0, 0, i)
+    cameraVector.set(1, 0, j)
 }
 
 function clearScreen()
@@ -38,10 +52,8 @@ function keypressHandler(e){
     {
         // R for rotate
         case 114:
-            for(const element of tiles)
-            {
-                element.rotate();
-            }
+            rotate();
+
             break;
         
         // P for mouse coords
@@ -71,7 +83,7 @@ function updateTiles()
 {
     for(const element of tiles)
     {
-        element.checkVisablity();
+        element.update();
     }  
 }
 
@@ -81,6 +93,7 @@ function toXY(i, j, size)
     let convertionMat = IJScalerMatrix.multiply(size);
     
     let ijMat = new Matrix(2, 1, [i, j]);
+    ijMat = RotationMatrix.multiply(ijMat);
     
     return convertionMat.multiply(ijMat).add(offset).getCol(0);
 }
@@ -158,25 +171,6 @@ class Tile{
         this.z = (this.k * this.size / 2);
     }
 
-    rotate()
-    {
-        if(!reorderTiles) // if false make ture
-        {
-            reorderTiles = true;
-        }
-        this.updated = true
-        let vector_coord = colVector([this.i, this.j]);
-        let transformed_coord_vector = RotationMatrix.multiply(vector_coord);
-        this.blockSpace.set(...this.getCoords(), null)
-
-        [this.i, this.j] = transformed_coord_vector.getCol(0);
-
-        this.blockSpace.set(...this.getCoords(), this);
-
-        this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size)
-    }
-
     checkVisablity() // efectively cheking lineto camera
     {
         let intersections = this.lineTo(cameraVector);
@@ -193,18 +187,17 @@ class Tile{
 
     draw() 
     {
-        this.z = this.k * this.size / 2;
-        [this.x, this.y] = toXY(this.i, this.j, this.size)
-        this.y -= this.z
-        this.updated = false;
         c.drawImage(this.sprite, this.x, this.y); 
     }
 
     update()
     {
+        this.z = this.k * this.size / 2;
+        [this.x, this.y] = toXY(this.i, this.j, this.size)
+        this.y -= this.z
+        this.updated = false;
         this.orderPriority = this.y + (this.k*canvas.height);
         this.checkVisablity();
-        this.draw();
     }
 
     lineTo(vector)
@@ -381,6 +374,32 @@ class BlockSpace
         }
     }
 
+    lineTo(startingCoord, vector)
+    {
+        let pathHead = startingCoord.add(vector);
+        
+        let atEdge = false;
+
+        let intersections = [];
+
+        while(!atEdge)
+        {
+            atEdge = this.atEdge(pathHead);
+            target = this.blockSpace.get(...pathHead.getCol(0));
+            if(target != null)
+            {
+                intersections.push(target);
+            }
+            pathHead = pathHead.add(vector);
+        }
+        
+        return intersections;
+    }
+    
+    lineToFrom(startingCoord, endingCoord)
+    {
+
+    }
 }
 
 
@@ -405,17 +424,17 @@ let tiles = []
 //drawSquare(-10, 9, -10, 10, -1, 0);
 //drawSquare(-10, 10, -10, -9, 0, 10)
 
-blockSpace.addTiles(0, 1, 2, 1, 1, 1, grassSprite)
-blockSpace.addTiles(0, 1, 1, 1, 1, 1, spriteSprite)
-blockSpace.addTiles(0, 10, 1, 1, 1, 1, spriteSprite)
-blockSpace.addTiles(10, 0, 1, 1, 1, 1, spriteSprite)
+blockSpace.addTiles(0, 1, 2, 1, 1, 1, grassSprite);
+blockSpace.addTiles(0, 1, 1, 1, 1, 1, spriteSprite);
+blockSpace.addTiles(0, 10, 1, 1, 1, 1, spriteSprite);
+blockSpace.addTiles(10, 0, 1, 1, 1, 1, spriteSprite);
 
-
+blockSpace.addTiles(blockSpace.iMin, blockSpace.jMin, -1, blockSpace.iSize, blockSpace.jSize, 1, grassSprite);
 
 blockSpace.addTiles(-5, -5, 0, 10, 10, 1);
 
 
-//drawSquare(-11, -11, -11, 11, 0, 15)
+// drawSquare(-11, -11, -11, 11, 0, 15)
 
 function sortOrderPriority(nums_)
 {
