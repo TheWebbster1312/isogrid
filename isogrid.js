@@ -6,7 +6,9 @@ document.addEventListener("keypress", keypressHandler);
 
 const IJScalerMatrix = new Matrix(2, 2, [-0.5, 0.5, 0.25, 0.25]);
 const XYScalerMatrix = IJScalerMatrix.invert();
-const RotationMatrix = new Matrix(2, 2, [1, 0, 0, 1]);
+const RotationMatrix = identityMatrix(2);
+const RotationMatrix3D = identityMatrix(3);
+const RotationMatracies = [RotationMatrix, RotationMatrix3D];
 const offset = new Matrix(2, 1, [canvas.width/2, canvas.height/2]);
 offset.toInt();
 const c = canvas.getContext("2d")
@@ -25,21 +27,21 @@ function rotate()
         blockSpaceOrientation++;
     }
     update_rotation_matrix();
-    RotationMatrix.show()
-    updateTiles(blockSpace.getData());
+    updateTiles(blockSpace.getDataFlat());
 }
 
 function update_rotation_matrix()
 {
-    RotationMatrix.set(0, 0, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
-    RotationMatrix.set(0, 1, Math.round(Math.sin((Math.PI * blockSpaceOrientation)/2)));
-    RotationMatrix.set(1, 0, Math.round(-Math.sin((Math.PI * blockSpaceOrientation)/2)));
-    RotationMatrix.set(1, 1, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
-
-    let [i, j] = RotationMatrix.multiply(colVector([1, 1])).getCol(0)
-    cameraVector.set(0, 0, i)
-    cameraVector.set(1, 0, j)
+    for(const m of RotationMatracies)
+    {
+        m.set(0, 0, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
+        m.set(0, 1, Math.round(Math.sin((Math.PI * blockSpaceOrientation)/2)));
+        m.set(1, 0, Math.round(-Math.sin((Math.PI * blockSpaceOrientation)/2)));
+        m.set(1, 1, Math.round(Math.cos((Math.PI * blockSpaceOrientation)/2)));
+    }
 }
+
+
 
 function clearScreen()
 {
@@ -79,9 +81,9 @@ grassSprite.src = "grass.bmp";
 const mouseSprite = new Image();
 mouseSprite.src = "mousesprite.bmp";
 
-function updateTiles()
+function updateTiles(data)
 {
-    for(const element of tiles)
+    for(const element of data)
     {
         element.update();
     }  
@@ -173,15 +175,30 @@ class Tile{
 
     checkVisablity() // efectively cheking lineto camera
     {
-        let intersections = this.lineTo(cameraVector);
-        if(intersections.length > 0)
+        // off screen check
+        if(this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height)
         {
             this.visable = false;
+            
         }
         else
         {
             this.visable = true;
         }
+
+        // old code to check if tiles are covered by other tiles
+        // proved more taxing than it was worth. Kepping in incase i find it useful
+        // let vector = RotationMatrix3D.invert().multiply(cameraVector);
+        // let intersections = this.lineTo(vector);
+
+        // if(intersections.length > 0)
+        // {
+        //     this.visable = false;
+        // }
+        // else
+        // {
+        //     this.visable = true;
+        // }
 
     }
 
@@ -197,7 +214,7 @@ class Tile{
         this.y -= this.z
         this.updated = false;
         this.orderPriority = this.y + (this.k*canvas.height);
-        this.checkVisablity();
+        //this.checkVisablity();
     }
 
     lineTo(vector)
@@ -231,12 +248,12 @@ class BlockSpace
 {
     constructor()
     {
-        this. iMax = 20;
-        this.jMax = 20;
-        this.kMax = 20;
-        this.iMin = -20;
-        this.jMin = -20;
-        this.kMin = -20;
+        this. iMax = 100;
+        this.jMax = 100;
+        this.kMax = 100;
+        this.iMin = -100;
+        this.jMin = -100;
+        this.kMin = -100;
 
         this.iSize = Math.abs(this.iMax) + Math.abs(this.iMin);
         this.jSize = Math.abs(this.jMax) + Math.abs(this.jMin);
@@ -245,6 +262,15 @@ class BlockSpace
         this.space = [];
         
         this.visable = true;
+
+        this.areaInView = 
+        {
+            iStart: this.iMin,
+            iEnd: this.iMax,
+            jStart: this.jMin,
+            jEnd: this.jMax
+        }
+        this.updateVisableArea();
         
         // each step is a vertical layer
         for (let step = 0; step < this.kSize + 1; step++)
@@ -351,13 +377,37 @@ class BlockSpace
         return returnData;
     }
 
+    getDataIn(iStart, iEnd, jStart, jEnd)
+    {
+        let returnData = [];
+        for(let layer = 0; layer < this.kSize; layer++)
+        {
+            if(this.space[layer].isNull) {continue;}
+
+            returnData.push(this.space[layer].getDataIn(iStart - this.iMin, jStart - this.jMin, iEnd - this.iMin, jEnd- this.jMin).filter(Boolean));
+        }
+
+        return returnData;
+    }
+
+    getDataFlat()
+    {
+        let returnData = [];
+        for(let layer of this.getData())
+        {
+            returnData = returnData.concat(layer);
+        }
+
+        return returnData;
+    }
+
+
     draw()
     {
         //Start from bottom slice
-        for(const layer of this.getData())
+        for(const layer of this.getDataIn(this.areaInView.iStart, this.areaInView.iEnd, this.areaInView.jStart, this.areaInView.jEnd))
         {
             this.draw_layer(layer)
-
         }
     }
 
@@ -395,6 +445,28 @@ class BlockSpace
         
         return intersections;
     }
+
+    updateVisableArea()
+    {
+        let [i, j] = toIJ(0, canvas.height/2, true).getCol(0);
+        console.log(i, j)
+        this.areaInView.iStart = i-1;
+        this.areaInView.jStart = j-1;
+
+        [i, j] = toIJ(canvas.width, canvas.height/2, true).getCol(0);
+        console.log(i, j)
+        this.areaInView.iEnd = i+1;
+        this.areaInView.jEnd = j+1;
+        
+    }
+
+    getmaxNumberOfBlocksPerLayer()
+    {
+        let dx = this.areaInView.iEnd - this.areaInView.iStart
+        let dy = this.areaInView.jEnd - this.areaInView.jStart
+
+        return dy * dy;
+    }
     
     lineToFrom(startingCoord, endingCoord)
     {
@@ -427,7 +499,7 @@ let tiles = []
 blockSpace.addTiles(0, 1, 2, 1, 1, 1, grassSprite);
 blockSpace.addTiles(0, 1, 1, 1, 1, 1, spriteSprite);
 blockSpace.addTiles(0, 10, 1, 1, 1, 1, spriteSprite);
-blockSpace.addTiles(10, 0, 1, 1, 1, 1, spriteSprite);
+blockSpace.addTiles(10, 0, 1, 1, 1, 1, stoneSprite);
 
 blockSpace.addTiles(blockSpace.iMin, blockSpace.jMin, -1, blockSpace.iSize, blockSpace.jSize, 1, grassSprite);
 
@@ -475,5 +547,5 @@ function animateFrame()
     mouseTile.draw();
 }
 
-updateTiles(blockSpace.getData());
+updateTiles(blockSpace.getDataFlat());
 

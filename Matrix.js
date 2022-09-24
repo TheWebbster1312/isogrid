@@ -885,6 +885,16 @@ class TileMatrix
         return copyList(data);
     }
 
+    getDataIn(colStart, rowStart, colEnd, rowEnd)
+    {
+        let data = [];
+        for(let i = rowStart; i < rowEnd; i++)
+        {
+            data = data.concat(this.getRow(i).slice(colStart, colEnd));
+        }
+        return copyList(data);
+    }
+
     set(row, col, data)
     {
         this.isNull = false;
